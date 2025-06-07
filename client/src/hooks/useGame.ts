@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, ChangeEvent } from "react";
 import { getRandomWord, saveHighScore, loadHighScore } from "@/lib/utils";
+import { playCorrectSound, playMistakeSound } from "@/lib/sounds";
 
 // Define possible game states
 type GameState = 'idle' | 'playing' | 'gameOver';
@@ -169,6 +170,13 @@ export function useGame() {
       // Calculate score
       const correctChars = typedText.split('').filter((char, i) => char === targetWord[i]).length;
       const progressRecovery = correctChars + (typedText === targetWord ? 2: 0);  // Bonus for perfect typing
+      
+      // Play appropriate sound based on correctness
+      if (typedText === targetWord) {
+        playCorrectSound();
+      } else {
+        playMistakeSound();
+      }
       
       // Update score and progress
       setGameData(prev => ({
