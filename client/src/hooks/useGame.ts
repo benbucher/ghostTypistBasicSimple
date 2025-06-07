@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, ChangeEvent } from "react";
 import { getRandomWord, saveHighScore, loadHighScore } from "@/lib/utils";
-import { playCorrectSound, playMistakeSound } from "@/lib/sounds";
+import { playCorrectSound, playMistakeSound, playGameOverSound } from "@/lib/sounds";
 
 // Define possible game states
 type GameState = 'idle' | 'playing' | 'gameOver';
@@ -111,6 +111,9 @@ export function useGame() {
       saveHighScore(finalScore);
       setGameData(prev => ({ ...prev, highScore: finalScore }));
     }
+    
+    // Play game over sound
+    playGameOverSound();
     
     clearTimers();
   };
