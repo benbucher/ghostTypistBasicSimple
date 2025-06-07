@@ -5,10 +5,19 @@ import { getRandomWord, saveHighScore, loadHighScore } from "@/lib/utils";
 type GameState = 'idle' | 'playing' | 'gameOver';
 
 // Interface for tracking typing state and letter-by-letter feedback
-export interface TypedWordState {
+interface TypedWordState {
   targetWord: string;    // The word the player needs to type
   typedText: string;     // What the player has typed so far
   letterStates: ('correct' | 'incorrect' | 'pending')[];  // Status of each letter
+}
+
+interface GameData {
+  currentWord: string;
+  currentScore: number;
+  highScore: number;
+  gameTime: number;
+  progressValue: number;
+  decreaseRate: number;
 }
 
 export function useGame() {
@@ -16,14 +25,12 @@ export function useGame() {
   const [gameState, setGameState] = useState<GameState>('idle');
   
   // Core game data including scores, timing, and progression
-  const [gameData, setGameData] = useState({
+  const [gameData, setGameData] = useState<GameData>({
     currentWord: '',      // Current word to type
     currentScore: 0,      // Player's current score
-    highScore: 0,         // Best score achieved
+    highScore: loadHighScore(),         // Best score achieved
     gameTime: 0,          // Time elapsed in seconds
-    currentLevel: 1,      // Current difficulty level
     progressValue: 100,   // Progress bar value (0-100)
-    finalScore: 0,        // Score when game ends
     decreaseRate: 1       // Rate at which progress decreases
   });
 
@@ -40,12 +47,6 @@ export function useGame() {
     game: null
   });
   
-  // Load high score from local storage on initial render
-  useEffect(() => {
-    const localHighScore = loadHighScore();
-    setGameData(prev => ({ ...prev, highScore: localHighScore }));
-  }, []);
-
   // Clear all active timers
   const clearTimers = () => {
     if (timerRef.current.progress) {
@@ -69,10 +70,8 @@ export function useGame() {
       currentScore: 0,
       highScore: gameData.highScore,
       gameTime: 0,
-      currentLevel: 1,
       progressValue: 100,
-      finalScore: 0,
-      decreaseRate: 1.0
+      decreaseRate: 1
     });
     
     setTypedWordState({
@@ -87,18 +86,16 @@ export function useGame() {
   
   // End the current game and handle high score updates
   const endGame = () => {
-    const finalScoreValue = gameData.currentScore;
+    const finalScore = gameData.currentScore;
     
     setGameState('gameOver');
-    setGameData(prev => ({ ...prev, finalScore: finalScoreValue }));
-    clearTimers();
     
-    // Update high score if current score is higher
-    if (finalScoreValue > gameData.highScore) {
-      const newHighScore = finalScoreValue;
-      setGameData(prev => ({ ...prev, highScore: newHighScore }));
-      saveHighScore(newHighScore);
+    if (finalScore > gameData.highScore) {
+      setGameData(prev => ({ ...prev, highScore: finalScore }));
+      saveHighScore(finalScore);
     }
+    
+    clearTimers();
   };
   
   // Start the progress bar decrease timer
@@ -123,13 +120,10 @@ export function useGame() {
       setGameData(prev => {
         const newTime = prev.gameTime + 1;
         const levelNumber = Math.floor(newTime / 40);  // Level up every 40 seconds
-        const newDecreaseRate = 3.0 + (levelNumber * 0.5);  // Increase difficulty with level
-        
         return {
           ...prev,
           gameTime: newTime,
-          currentLevel: levelNumber,
-          decreaseRate: newDecreaseRate
+          decreaseRate: 3.0 + (levelNumber * 0.5)
         };
       });
     }, 1000);
@@ -191,9 +185,7 @@ export function useGame() {
     currentScore: gameData.currentScore,
     highScore: gameData.highScore,
     gameTime: gameData.gameTime,
-    currentLevel: gameData.currentLevel,
     progressValue: gameData.progressValue,
-    finalScore: gameData.finalScore,
     handleTyping,
     startGame,
     restartGame: startGame,
