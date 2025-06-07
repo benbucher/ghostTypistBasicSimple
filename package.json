@@ -1,7 +1,7 @@
 {
   "name": "ghost-typist",
   "version": "1.0.0",
-  "homepage": "https://benbucher.github.io/ghostTypistChaser",
+  "homepage": "https://benbucher.github.io/ghostTypistBasicSimple",
   "type": "module",
   "license": "MIT",
   "scripts": {

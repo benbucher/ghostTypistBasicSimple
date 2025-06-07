@@ -18,6 +18,8 @@ import GamePage from "@/pages/GamePage";
 function Router() {
   return (
     <Switch>
+      <Route path="/ghostTypistBasicSimple/" component={GamePage} />
+      <Route path="/ghostTypistBasicSimple/*" component={NotFound} />
       <Route path="/" component={GamePage} />
       <Route component={NotFound} />
     </Switch>

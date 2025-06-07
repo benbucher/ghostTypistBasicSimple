@@ -10,9 +10,14 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./client/src"),
     },
   },
-  base: "/",
+  base: "/ghostTypistBasicSimple/",
   build: {
-    outDir: "dist",
+    outDir: "../dist",
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'client/index.html'),
+      },
+    },
   },
 });
