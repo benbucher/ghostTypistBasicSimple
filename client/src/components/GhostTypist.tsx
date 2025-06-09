@@ -105,12 +105,12 @@ export default function GhostTypist() {
   };
 
   return (
-    <div className="min-h-screen p-4 flex flex-col items-center justify-center fade-in">
+    <div className="min-h-screen p-4 flex flex-col items-center justify-start md:justify-center fade-in">
       <div className="w-full max-w-2xl mx-auto flex flex-col">
         {/* Header + Score Display Combined */}
         <div className="flex justify-between items-center w-full py-4 gap-x-8">
           {/* Title */}
-          <h1 className="text-4xl text-primary">Ghost Typist</h1>
+          <h1 className="text-3xl md:text-4xl text-primary">Ghost Typist</h1>
 
           {/* Compact Score Display with aligned labels/values */}
           <div className="flex flex-col gap-1 text-xs font-medium text-primary w-40">
@@ -134,11 +134,11 @@ export default function GhostTypist() {
 
           {/* Ghost Display */}
           <div className="flex justify-center items-center mb-4">
-            <GhostImage className="w-48 h-48 opacity-90" />
+            <GhostImage className="w-32 h-32 md:w-48 md:h-48 opacity-90" />
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full h-5 bg-gray-200 rounded-full mb-8 border-2 border-primary overflow-hidden">
+          <div className="w-full h-5 bg-gray-200 rounded-full mb-6 md:mb-8 border-2 border-primary overflow-hidden">
             <div
               className={`h-full bg-primary rounded-l-full transition-all duration-300 ${progressValue <= 30 ? "bg-opacity-80" : ""}`}
               style={{ width: `${progressValue}%` }}
@@ -147,7 +147,7 @@ export default function GhostTypist() {
 
           {renderWordDisplay()}
 
-          <div className="w-full max-w-md mb-8">
+          <div className="w-full max-w-md mb-6 md:mb-8">
             <Input
               ref={inputRef}
               type="text"
@@ -171,7 +171,7 @@ export default function GhostTypist() {
         </div>
       </div>
 
-      <div className="w-full text-center py-4">
+      <div className="w-full text-center py-4 mt-auto md:mt-0">
         <p className="text-xs text-primary opacity-70">
           Ghost Typist | Type to survive!
         </p>
