@@ -159,6 +159,9 @@ export default function GhostTypist() {
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
+              inputMode="text"
+              autoSave="off"
+              // autoFocus={gameState === "playing"}
             />
           </div>
 
