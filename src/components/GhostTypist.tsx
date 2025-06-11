@@ -107,13 +107,14 @@ export default function GhostTypist() {
   return (
     <div className="min-h-screen p-4 flex flex-col items-center justify-start md:justify-center fade-in">
       <div className="w-full max-w-2xl mx-auto flex flex-col">
+        
         {/* Header + Score Display Combined */}
-        <div className="flex justify-between items-center w-full py-4 gap-x-8">
+        <div className="flex justify-between items-center w-full py-4 gap-x-24">
           {/* Title */}
           <h1 className="text-3xl md:text-4xl text-primary">Ghost Typist</h1>
 
           {/* Compact Score Display with aligned labels/values */}
-          <div className="flex flex-col gap-1 text-xs font-medium text-primary w-40">
+          <div className="flex flex-col gap-1 text-xs font-medium text-primary w-32">
             <div className="flex justify-between w-full">
               <span className="whitespace-nowrap">High Score:</span>
               <span>{highScore}</span>
