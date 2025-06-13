@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, ChangeEvent } from "react";
-import { getRandomWord, saveHighScore, loadHighScore } from "@/lib/utils";
+import { getRandomWord, saveHighScore, loadHighScore, loadWords } from "@/lib/utils";
 import { playCorrectSound, playMistakeSound, playGameOverSound } from "@/lib/sounds";
 
 // Define possible game states
@@ -77,8 +77,9 @@ export function useGame() {
   };
 
   // Initialize and start a new game
-  const startGame = () => {
+  const startGame = async () => {
     clearTimers();
+    await loadWords(); // Load words before starting the game
     const newWord = getRandomWord();
     
     setGameState('playing');
