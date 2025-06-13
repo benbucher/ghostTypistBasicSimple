@@ -33,7 +33,7 @@ export default function GhostTypist() {
       if (document.activeElement !== inputRef.current && (event.key === " " || event.key === "Enter")) {
         event.preventDefault();
         if (gameState === "idle") startGame();
-        else if (gameState === "gameOver") restartGame();
+        else if (gameState === "gameOver") restartGame(inputRef.current);
       }
     };
 
@@ -88,7 +88,7 @@ export default function GhostTypist() {
       return (
         <Button
           className="bg-primary text-background font-medium py-3 px-8 rounded-full hover:bg-opacity-90 transition-all text-lg"
-          onClick={restartGame}
+          onClick={() => restartGame(inputRef.current)}
         >
           Play Again
         </Button>

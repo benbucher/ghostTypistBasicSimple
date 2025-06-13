@@ -77,10 +77,15 @@ export function useGame() {
   };
 
   // Initialize and start a new game
-  const startGame = async () => {
+  const startGame = async (inputElement?: HTMLInputElement) => {
     clearTimers();
     await loadWords(); // Load words before starting the game
     const newWord = getRandomWord();
+    
+    // Clear input field if provided
+    if (inputElement) {
+      inputElement.value = '';
+    }
     
     setGameState('playing');
     setGameData(prev => ({
