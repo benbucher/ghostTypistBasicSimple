@@ -12,6 +12,12 @@ interface TypedWordState {
   letterStates: ('correct' | 'incorrect' | 'pending')[];  // Status of each letter
 }
 
+export interface WordHistory {
+  targetWord: string;
+  typedWord: string;
+  letterStates: ('correct' | 'incorrect')[];
+}
+
 interface GameData {
   currentWord: string;
   currentScore: number;
@@ -19,6 +25,7 @@ interface GameData {
   gameTime: number;
   progressValue: number;
   decreaseRate: number;
+  wordHistory: WordHistory[];  // Add word history to game data
 }
 
 export function useGame() {
@@ -39,7 +46,8 @@ export function useGame() {
       highScore: initialHighScore,  // Start with 0
       gameTime: 0,          // Time elapsed in seconds
       progressValue: 100,   // Progress bar value (0-100)
-      decreaseRate: 1       // Rate at which progress decreases
+      decreaseRate: 1,      // Rate at which progress decreases
+      wordHistory: []       // Initialize empty word history
     };
   });
 
@@ -94,7 +102,8 @@ export function useGame() {
       currentScore: 0,
       gameTime: 0,
       progressValue: 100,
-      decreaseRate: 1
+      decreaseRate: 1,
+      wordHistory: []  // Reset word history
     }));
     
     setTypedWordState({
@@ -187,11 +196,18 @@ export function useGame() {
         playMistakeSound();
       }
       
-      // Update score and progress
+      // Add word to history
       setGameData(prev => ({
         ...prev,
         currentScore: prev.currentScore + correctChars,
-        progressValue: Math.min(100, prev.progressValue + progressRecovery)
+        progressValue: Math.min(100, prev.progressValue + progressRecovery),
+        wordHistory: [...prev.wordHistory, {
+          targetWord,
+          typedWord: typedText,
+          letterStates: targetWord.split('').map((letter, i) => 
+            typedText[i] === letter ? 'correct' : 'incorrect'
+          )
+        }]
       }));
       
       // Generate new word and reset typing state
@@ -225,6 +241,7 @@ export function useGame() {
     handleTyping,
     startGame,
     restartGame: startGame,
-    typedWordState
+    typedWordState,
+    gameData
   };
 }

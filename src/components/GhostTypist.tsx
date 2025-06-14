@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import GhostImage from "./GhostImage";
 import { useGame } from "@/hooks/useGame";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import WordHistorySummary from "./WordHistorySummary";
 
 export default function GhostTypist() {
   const {
@@ -15,7 +16,8 @@ export default function GhostTypist() {
     handleTyping,
     startGame,
     restartGame,
-    typedWordState
+    typedWordState,
+    gameData
   } = useGame();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -169,6 +171,10 @@ export default function GhostTypist() {
           <div className="text-center h-[64px] mb-4 fade-in">
             {renderGameControls()}
           </div>
+
+          {gameState === "gameOver" && (
+            <WordHistorySummary wordHistory={gameData.wordHistory} />
+          )}
         </div>
       </div>
 
