@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { WordHistory } from "@/hooks/useGame";
+import { useDictionary } from "@/hooks/useDictionary";
 
 interface WordHistorySummaryProps {
   wordHistory: WordHistory[];
@@ -7,6 +8,8 @@ interface WordHistorySummaryProps {
 
 export default function WordHistorySummary({ wordHistory }: WordHistorySummaryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [hoveredWord, setHoveredWord] = useState<string | null>(null);
+  const { definition, loading } = useDictionary(hoveredWord || '');
 
   if (wordHistory.length === 0) {
     return null;
@@ -34,7 +37,9 @@ export default function WordHistorySummary({ wordHistory }: WordHistorySummaryPr
             <div 
               key={index} 
               className="flex justify-between items-center text-sm md:text-base
-                hover:bg-gray-200/50 rounded-md p-2 transition-colors"
+                hover:bg-gray-200/50 rounded-md p-2 transition-colors relative group"
+              onMouseEnter={() => setHoveredWord(word.targetWord)}
+              onMouseLeave={() => setHoveredWord(null)}
             >
               <div className="text-primary font-medium">{word.targetWord}</div>
               <div className="flex items-center gap-0.5">
@@ -58,6 +63,20 @@ export default function WordHistorySummary({ wordHistory }: WordHistorySummaryPr
                   </span>
                 )}
               </div>
+              
+              {/* Tooltip */}
+              {hoveredWord === word.targetWord && !loading && (
+                <div className="absolute right-0 top-0 w-64 p-2 bg-primary/10 backdrop-blur-sm text-primary text-sm rounded shadow-lg z-10 border border-primary/20">
+                  {definition ? (
+                    <div>
+                      <div className="font-semibold mb-1 text-primary/80">{word.targetWord}</div>
+                      <div className="text-primary/70">{definition}</div>
+                    </div>
+                  ) : (
+                    <div className="text-primary/70">No definition found</div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
