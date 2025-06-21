@@ -39,25 +39,41 @@ export function useDictionary(word: string) {
       clearTimeout(timeoutRef.current);
     }
 
+    // Clean up expired rate-limited entries
+    const RATE_LIMIT_CACHE_DURATION = 1000 * 5; // 5 seconds
+    Object.keys(cache.current).forEach(cachedWord => {
+      const entry = cache.current[cachedWord];
+      if (entry.status === 'rate_limited' && Date.now() - entry.timestamp > RATE_LIMIT_CACHE_DURATION) {
+        delete cache.current[cachedWord];
+      }
+    });
+
     // Check cache first
     const cachedEntry = cache.current[word];
-    const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
-    if (cachedEntry && Date.now() - cachedEntry.timestamp < CACHE_DURATION) {
-      if (cachedEntry.status === 'found') {
-        setDefinition(cachedEntry.definition);
-        setError(null);
-      } else if (cachedEntry.status === 'not_found') {
-        setDefinition(null);
-        setError('Word not found in dictionary');
-      } else if (cachedEntry.status === 'rate_limited') {
-        setDefinition(null);
-        setError('API rate limit exceeded. Please try again later.');
+    const CACHE_DURATION = 1000 * 60 * 60; // 1 hour for found/not_found
+    
+    if (cachedEntry) {
+      const isExpired = cachedEntry.status === 'rate_limited' 
+        ? Date.now() - cachedEntry.timestamp > RATE_LIMIT_CACHE_DURATION
+        : Date.now() - cachedEntry.timestamp > CACHE_DURATION;
+      
+      if (!isExpired) {
+        if (cachedEntry.status === 'found') {
+          setDefinition(cachedEntry.definition);
+          setError(null);
+        } else if (cachedEntry.status === 'not_found') {
+          setDefinition(null);
+          setError('Word not found in dictionary');
+        } else if (cachedEntry.status === 'rate_limited') {
+          setDefinition(null);
+          setError('API rate limit exceeded. Retrying in a few seconds...');
+        }
+        return;
       }
-      return;
     }
 
-    // Don't make API calls for words we've already determined don't exist
-    if (cachedEntry?.status === 'not_found') {
+    // Don't make API calls for words we've already determined don't exist (unless cache expired)
+    if (cachedEntry?.status === 'not_found' && Date.now() - cachedEntry.timestamp < CACHE_DURATION) {
       setDefinition(null);
       setError('Word not found in dictionary');
       return;
@@ -125,7 +141,7 @@ export function useDictionary(word: string) {
             if (axios.isAxiosError(err)) {
               const status = err.response?.status;
               if (status === 429) {
-                errorMessage = 'API rate limit exceeded. Please try again later.';
+                errorMessage = 'API rate limit exceeded. Retrying in a few seconds...';
                 cacheStatus = 'rate_limited';
               } else if (status === 404) {
                 errorMessage = 'Word not found in dictionary';
