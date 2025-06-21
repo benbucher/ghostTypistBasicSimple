@@ -9,7 +9,7 @@ interface WordHistorySummaryProps {
 export default function WordHistorySummary({ wordHistory }: WordHistorySummaryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [hoveredWord, setHoveredWord] = useState<string | null>(null);
-  const { definition, loading } = useDictionary(hoveredWord || '');
+  const { definition, loading, error } = useDictionary(hoveredWord || '');
 
   if (wordHistory.length === 0) {
     return null;
@@ -65,9 +65,16 @@ export default function WordHistorySummary({ wordHistory }: WordHistorySummaryPr
               </div>
               
               {/* Tooltip */}
-              {hoveredWord === word.targetWord && !loading && (
+              {hoveredWord === word.targetWord && (
                 <div className="absolute right-0 top-0 w-64 p-2 bg-primary/10 backdrop-blur-sm text-primary text-sm rounded shadow-lg z-10 border border-primary/20">
-                  {definition ? (
+                  {loading ? (
+                    <div className="text-primary/70">Loading definition...</div>
+                  ) : error ? (
+                    <div>
+                      <div className="font-semibold mb-1 text-primary/80">{word.targetWord}</div>
+                      <div className="text-red-500/80">{error}</div>
+                    </div>
+                  ) : definition ? (
                     <div>
                       <div className="font-semibold mb-1 text-primary/80">{word.targetWord}</div>
                       <div 
@@ -76,7 +83,7 @@ export default function WordHistorySummary({ wordHistory }: WordHistorySummaryPr
                       />
                     </div>
                   ) : (
-                    <div className="text-primary/70">No definition found</div>
+                    <div className="text-primary/70">No definition available</div>
                   )}
                 </div>
               )}

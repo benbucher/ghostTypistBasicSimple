@@ -20,6 +20,7 @@ interface DictionaryResponse {
 interface CacheEntry {
   definition: string;
   timestamp: number;
+  status: 'found' | 'not_found' | 'rate_limited';
 }
 
 export function useDictionary(word: string) {
@@ -42,7 +43,23 @@ export function useDictionary(word: string) {
     const cachedEntry = cache.current[word];
     const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
     if (cachedEntry && Date.now() - cachedEntry.timestamp < CACHE_DURATION) {
-      setDefinition(cachedEntry.definition);
+      if (cachedEntry.status === 'found') {
+        setDefinition(cachedEntry.definition);
+        setError(null);
+      } else if (cachedEntry.status === 'not_found') {
+        setDefinition(null);
+        setError('Word not found in dictionary');
+      } else if (cachedEntry.status === 'rate_limited') {
+        setDefinition(null);
+        setError('API rate limit exceeded. Please try again later.');
+      }
+      return;
+    }
+
+    // Don't make API calls for words we've already determined don't exist
+    if (cachedEntry?.status === 'not_found') {
+      setDefinition(null);
+      setError('Word not found in dictionary');
       return;
     }
 
@@ -78,21 +95,55 @@ export function useDictionary(word: string) {
           const firstDefinition = data[0]?.text;
 
           if (firstDefinition) {
-            // Update cache
+            // Update cache with found definition
             cache.current[word] = {
               definition: firstDefinition,
               timestamp: Date.now(),
+              status: 'found'
             };
+            setDefinition(firstDefinition);
+          } else {
+            // Word not found - cache this result
+            cache.current[word] = {
+              definition: '',
+              timestamp: Date.now(),
+              status: 'not_found'
+            };
+            setDefinition(null);
+            setError('Word not found in dictionary');
           }
-
-          setDefinition(firstDefinition || null);
         } catch (err) {
           // Don't set error if request was aborted
           if (
             (err instanceof Error && err.name !== 'AbortError') ||
             (axios.isAxiosError(err) && err.code !== 'ERR_CANCELED')
           ) {
-            setError(err.message);
+            let errorMessage = 'Failed to fetch definition';
+            let cacheStatus: CacheEntry['status'] = 'not_found';
+
+            // Handle rate limiting specifically
+            if (axios.isAxiosError(err)) {
+              const status = err.response?.status;
+              if (status === 429) {
+                errorMessage = 'API rate limit exceeded. Please try again later.';
+                cacheStatus = 'rate_limited';
+              } else if (status === 404) {
+                errorMessage = 'Word not found in dictionary';
+                cacheStatus = 'not_found';
+              } else if (status && status >= 500) {
+                errorMessage = 'Dictionary service temporarily unavailable';
+                cacheStatus = 'rate_limited'; // Treat server errors as temporary
+              }
+            }
+
+            // Cache the error result to prevent repeated failed requests
+            cache.current[word] = {
+              definition: '',
+              timestamp: Date.now(),
+              status: cacheStatus
+            };
+
+            setError(errorMessage);
             setDefinition(null);
           }
         } finally {
