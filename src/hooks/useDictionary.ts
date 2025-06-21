@@ -1,4 +1,6 @@
+/// <reference types="vite/client" />
 import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 
 interface Definition {
   definition: string;
@@ -50,28 +52,38 @@ export function useDictionary(word: string) {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(
-          `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`,
-          { signal: abortControllerRef.current.signal }
+        const apiKey = import.meta.env.VITE_WORDNIK_API_KEY;
+        const response = await axios.get(
+          `https://api.wordnik.com/v4/word.json/${word}/definitions`,
+          {
+            params: {
+              limit: 1,
+              includeRelated: false,
+              useCanonical: false,
+              includeTags: false,
+              api_key: apiKey,
+            },
+            signal: abortControllerRef.current.signal,
+          }
         );
-        if (!response.ok) {
-          throw new Error('Word not found');
-        }
-        const data: DictionaryResponse[] = await response.json();
-        const firstDefinition = data[0]?.meanings[0]?.definitions[0]?.definition;
-        
+        const data = response.data;
+        const firstDefinition = data[0]?.text;
+
         if (firstDefinition) {
           // Update cache
           cache.current[word] = {
             definition: firstDefinition,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           };
         }
-        
+
         setDefinition(firstDefinition || null);
       } catch (err) {
         // Don't set error if request was aborted
-        if (err instanceof Error && err.name !== 'AbortError') {
+        if (
+          (err instanceof Error && err.name !== 'AbortError') ||
+          (axios.isAxiosError(err) && err.code !== 'ERR_CANCELED')
+        ) {
           setError(err.message);
           setDefinition(null);
         }
