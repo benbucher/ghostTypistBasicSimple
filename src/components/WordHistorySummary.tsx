@@ -70,7 +70,10 @@ export default function WordHistorySummary({ wordHistory }: WordHistorySummaryPr
                   {definition ? (
                     <div>
                       <div className="font-semibold mb-1 text-primary/80">{word.targetWord}</div>
-                      <div className="text-primary/70">{definition}</div>
+                      <div 
+                        className="text-primary/70"
+                        dangerouslySetInnerHTML={{ __html: definition }}
+                      />
                     </div>
                   ) : (
                     <div className="text-primary/70">No definition found</div>
