@@ -28,9 +28,15 @@ export function useDictionary(word: string) {
   const [error, setError] = useState<string | null>(null);
   const cache = useRef<Record<string, CacheEntry>>({});
   const abortControllerRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!word) return;
+
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
     // Check cache first
     const cachedEntry = cache.current[word];
@@ -40,62 +46,68 @@ export function useDictionary(word: string) {
       return;
     }
 
-    const fetchDefinition = async () => {
-      // Cancel previous request if it exists
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+    // Debounce the API call by 350ms
+    timeoutRef.current = setTimeout(() => {
+      const fetchDefinition = async () => {
+        // Cancel previous request if it exists
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
 
-      // Create new AbortController for this request
-      abortControllerRef.current = new AbortController();
+        // Create new AbortController for this request
+        abortControllerRef.current = new AbortController();
 
-      setLoading(true);
-      setError(null);
-      try {
-        const apiKey = import.meta.env.VITE_WORDNIK_API_KEY;
-        const response = await axios.get(
-          `https://api.wordnik.com/v4/word.json/${word}/definitions`,
-          {
-            params: {
-              limit: 1,
-              includeRelated: false,
-              useCanonical: false,
-              includeTags: false,
-              api_key: apiKey,
-            },
-            signal: abortControllerRef.current.signal,
+        setLoading(true);
+        setError(null);
+        try {
+          const apiKey = import.meta.env.VITE_WORDNIK_API_KEY;
+          const response = await axios.get(
+            `https://api.wordnik.com/v4/word.json/${word}/definitions`,
+            {
+              params: {
+                limit: 1,
+                includeRelated: false,
+                useCanonical: false,
+                includeTags: false,
+                api_key: apiKey,
+              },
+              signal: abortControllerRef.current.signal,
+            }
+          );
+          const data = response.data;
+          const firstDefinition = data[0]?.text;
+
+          if (firstDefinition) {
+            // Update cache
+            cache.current[word] = {
+              definition: firstDefinition,
+              timestamp: Date.now(),
+            };
           }
-        );
-        const data = response.data;
-        const firstDefinition = data[0]?.text;
 
-        if (firstDefinition) {
-          // Update cache
-          cache.current[word] = {
-            definition: firstDefinition,
-            timestamp: Date.now(),
-          };
+          setDefinition(firstDefinition || null);
+        } catch (err) {
+          // Don't set error if request was aborted
+          if (
+            (err instanceof Error && err.name !== 'AbortError') ||
+            (axios.isAxiosError(err) && err.code !== 'ERR_CANCELED')
+          ) {
+            setError(err.message);
+            setDefinition(null);
+          }
+        } finally {
+          setLoading(false);
         }
+      };
 
-        setDefinition(firstDefinition || null);
-      } catch (err) {
-        // Don't set error if request was aborted
-        if (
-          (err instanceof Error && err.name !== 'AbortError') ||
-          (axios.isAxiosError(err) && err.code !== 'ERR_CANCELED')
-        ) {
-          setError(err.message);
-          setDefinition(null);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDefinition();
+      fetchDefinition();
+    }, 350);
 
     // Cleanup function to abort request on unmount or word change
     return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
